@@ -7,13 +7,14 @@ Base = declarative_base()
 
 subscription_table = Table('subscription', Base.metadata,
                            Column('chat_id',
-                               BigInteger,
-                               ForeignKey('chat.id')),
+                                  BigInteger,
+                                  ForeignKey('chat.id')),
                            Column('account_id',
-                               String(convert_unicode=True,length=255),
-                               ForeignKey('account.id')),
+                                  String(convert_unicode=True,length=255),
+                                  ForeignKey('account.id')),
                            UniqueConstraint('chat_id', 'account_id')
                            )
+
 
 class Chat(Base):
     __tablename__ = 'chat'
@@ -22,7 +23,8 @@ class Chat(Base):
     updated_at = Column(DateTime(timezone=True), default=func.now(), nullable=False)
     created_at = Column(DateTime(timezone=True), default=func.now(), nullable=False)
     accounts = relationship('Account', secondary=subscription_table,
-                                 back_populates='chats')
+                            back_populates='chats')
+
 
 class Account(Base):
      __tablename__ = 'account'
@@ -31,7 +33,7 @@ class Account(Base):
      # no updated_at column because it never gets updated
      created_at = Column(DateTime(timezone=True), default=func.now(), nullable=False)
      chats = relationship('Chat', secondary=subscription_table,
-                            back_populates='accounts')
+                          back_populates='accounts')
      accountbalances = relationship('AccountBalance', cascade='all, delete-orphan')
 
 
@@ -48,9 +50,8 @@ class AccountBalance(Base):
      created_at = Column(DateTime(timezone=True), default=func.now(), nullable=False)
 
 
-
-
 from sqlalchemy import create_engine
+
 
 def get_db_url():
     # dialect+driver://username:password@host:port/database

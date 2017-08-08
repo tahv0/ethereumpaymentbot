@@ -2,9 +2,9 @@
 import time
 from config_parser.config_parser import get_config_value
 from paymentpoller.balanceupdater import update_accounts_balances
-from paymentpoller.tgbot.bot import TGBot
+from paymentpoller.tgbotupdater import TGBotUpdater
 import telegram
-tgbot_watchdog = TGBot()
+tgbot_updater = TGBotUpdater()
 tgbot = telegram.Bot(token=get_config_value('TGBOT', 'token'))
 
 def start_polling():
