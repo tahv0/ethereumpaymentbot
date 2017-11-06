@@ -22,28 +22,36 @@ def update_accounts_balances(tgbot):
     session = Session()
     accounts_queryset = session.query(Account).options(eagerload(Account.chats)).all()
     for account in accounts_queryset:
-        post_json = {'jsonrpc': '2.0', 'method': 'eth_getBalance', 'params': ['{}'.format(account.id), 'latest'], 'id': 1}
-        account_balance = requests.post('http://{}:{}'.format(json_rpc_api_url, json_rpc_api_port), json=post_json).json()
+        account_id = account.id
+        if not str(account.id).startswith('0x') and not str(account.id).startswith('0X'):
+            account_id = '0x'+ str(account.id)
+        post_json = {'jsonrpc': '2.0', 'method': 'eth_getBalance', 'params': ['{}'.format(account_id), 'latest'], 'id': 1}
+        try:
+            account_balance = requests.post('http://{}:{}'.format(json_rpc_api_url, json_rpc_api_port), json=post_json).json()
+        except requests.ConnectionError as e:
+            print(str(e))
+            continue
         old_balance = session.query(AccountBalance).filter_by(account_id=account.id).order_by(AccountBalance.id.desc()).first()
         if 'error' not in account_balance:
             new_balance = int(account_balance['result'], 16)
-            if old_balance is None or new_balance != old_balance.balance:
-                changed_value = new_balance if old_balance is None else (new_balance - old_balance.balance) / 10 ** 18
+            if old_balance is None or new_balance != int(old_balance.balance):
+                changed_value = 0 if old_balance is None else (new_balance - int(old_balance.balance)) / 10 ** 18
                 changed_in_money = {
                     'EUR': changed_value * float(ether_stock_price['price_eur']),
                     'USD': changed_value * float(ether_stock_price['price_usd'])
                 }
                 new_account_balance = AccountBalance(account_id=account.id,
-                                                     balance=new_balance,
+                                                     balance=str(new_balance),
                                                      change_in_money=changed_in_money)
                 session.add(new_account_balance)
                 session.commit()
                 if old_balance is not None:
                     for chat in account.chats:
                         if chat.subscription_active:
-                            tgbot.send_message(chat_id=chat.id, text='{} UTC - 1 ETH = ${} / €{}\n'
+                            tgbot.send_message(chat_id=chat.id, text='{} UTC\n1 ETH = ${} / €{}\n'
                                                                      'Account {} balance changed {} ETH.\n'
-                                                                     'Value ${} / €{}'
+                                                                     'Value ${} / €{}\n'
+                                                                     'New account balance {} ETH.'
                                                .format(
                                                 str(datetime.utcnow()),
                                                 round(float(ether_stock_price['price_usd']), 2),
@@ -51,6 +59,8 @@ def update_accounts_balances(tgbot):
                                                 account.id,
                                                 changed_value,
                                                 round(changed_in_money["USD"], 3),
-                                                round(changed_in_money["EUR"], 3)))
+                                                round(changed_in_money["EUR"], 3),
+                                                str(new_balance / 10 ** 18)))
     session.close()
+    print(str(datetime.utcnow()), 'UPDATED')
 

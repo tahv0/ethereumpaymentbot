@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from sqlalchemy import Column, UniqueConstraint, DateTime, String, func, Boolean, Integer, BigInteger, ForeignKey, Table, JSON
+from sqlalchemy import Column, UniqueConstraint, DateTime, BIGINT, String, func, Boolean, Integer, BigInteger, ForeignKey, Table, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from config_parser.config_parser import get_config_value
@@ -42,8 +42,8 @@ class AccountBalance(Base):
      # no need for id or primary key, but lets add anyway
      id = Column(Integer, autoincrement=True, primary_key=True)
      account_id = Column(String(convert_unicode=True, length=255), ForeignKey('account.id'),  nullable=False)
-     # balance is in wei
-     balance = Column(BigInteger, primary_key=False, autoincrement=False, nullable=False)
+     # balance is in wei. It is string because over 10ETH doesnt fit into BigInteger
+     balance = Column(String(convert_unicode=True, length=255), nullable=False)
      # no updated_at column because new row is inserted when account balance changes
      # change_in_money: eg. { 'EUR': 200.30, 'USD': 230.44 }
      change_in_money = Column(JSON, nullable=False)

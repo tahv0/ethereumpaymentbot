@@ -11,8 +11,8 @@ from db.models import Chat, Session, Account
 
 class TGBotUpdater:
     def __init__(self):
-        updater = Updater(token=get_config_value('TGBOT', 'token'))
-        dispatcher = updater.dispatcher
+        self.updater = Updater(token=get_config_value('TGBOT', 'token'))
+        dispatcher = self.updater.dispatcher
         start_handler = CommandHandler('start', self._start)
         account_add_handler = CommandHandler('add', self._add_account, pass_args=True)
         account_rm_hanlder = CommandHandler('rm', self._rm_account, pass_args=True)
@@ -29,15 +29,17 @@ class TGBotUpdater:
         dispatcher.add_handler(subscriptions_handler)
         dispatcher.add_handler(help_handler)
         dispatcher.add_handler(credits_handler)
-        updater.start_polling()
+        self.updater.start_polling()
+
+    def stop_polling(self):
+        self.updater.stop()
 
     def _start(self, bot, update):
         self._check_and_add_chat(update)
         chat_id = update.message.chat_id
         bot.send_message(chat_id=chat_id, text="<pre>Hello! I'm Ethereum Payment Bot. "
-                                                          "You can Subscribe notifications from me about balance changes in blockchain for wanted Ethereum"
-                                                          " wallets!</pre>"
-                                               "<pre>Please use /help for showing all I can do for you!</pre>",
+                                                          "You can Subscribe notifications from me about wallet balance changes.</pre>"
+                                               "<pre>Please use /help for listing all I can do for you!</pre>",
                          parse_mode='HTML'
                          )
 
@@ -140,7 +142,8 @@ class TGBotUpdater:
                     "# print help text\n" \
                     "`/help`\n" \
                     "# print informations about bot\n" \
-                    "`/credits`"
+                    "`/credits`\n\n" \
+                    "If you find any problems with this bot, please contact @tahv0"
         bot.send_message(chat_id=chat_id, text=help_text, parse_mode="Markdown")
 
     @staticmethod
@@ -149,8 +152,8 @@ class TGBotUpdater:
         credits_text = "Credits:\n" \
                        "Copyright © 2017 Tuomas Aho\n" \
                        "Follow this project on GitHub: https://github.com/tahv0/ethereumpaymentbot\n\n" \
-                       "Donate: 0x744211bdd22f502cbA6A2265e981CB85384815cB\n" \
-                       "Thanks!"
+                       "Buy me a beer: 0x744211bdd22f502cbA6A2265e981CB85384815cB\n" \
+                       "Cheers!"
         bot.send_message(chat_id=chat_id, text=credits_text, parse_mode="Markdown")
 
 
